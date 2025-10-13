@@ -13,9 +13,11 @@ import {
 
 interface PoliceLoginProps {
   onBack: () => void;
+  onLoginSuccess: () => void;
+  onSwitchToRegister: () => void; // 🔹 Add this prop
 }
 
-export default function PoliceLogin({ onBack }: PoliceLoginProps) {
+export default function PoliceLogin({ onBack, onLoginSuccess, onSwitchToRegister }: PoliceLoginProps) {
   const [formData, setFormData] = useState({
     badgeNumber: '',
     password: '',
@@ -30,16 +32,24 @@ export default function PoliceLogin({ onBack }: PoliceLoginProps) {
     setIsLoading(true);
     setError('');
 
-    // Simulate authentication
-    setTimeout(() => {
-      if (formData.badgeNumber && formData.password && formData.station) {
-        // Simulate successful login
-        alert('Login successful! Redirecting to dashboard...');
-      } else {
-        setError('Please fill in all required fields');
-      }
+    try {
+      const res = await fetch('http://localhost:5050/api/police/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || 'Login failed');
+
+      localStorage.setItem('token', data.token);
+      onLoginSuccess();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const fadeInUp = {
@@ -179,8 +189,21 @@ export default function PoliceLogin({ onBack }: PoliceLoginProps) {
             </motion.button>
           </form>
 
+          {/* Switch to Registration */}
+          <div className="mt-8 pt-6 border-t border-white/10 text-center">
+            <p className="text-gray-300 mb-4">Don’t have an account?</p>
+            <motion.button
+              onClick={onSwitchToRegister}
+              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Register as Police Officer
+            </motion.button>
+          </div>
+
           {/* Additional Info */}
-          <div className="mt-8 pt-6 border-t border-white/10">
+          <div className="mt-6">
             <div className="flex items-center gap-3 text-sm text-gray-400">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Secure encrypted connection</span>

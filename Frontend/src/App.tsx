@@ -4,6 +4,10 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sphere } from '@react-three/drei';
 import PoliceLogin from './components/PoliceLogin';
 import MissingPersonReport from './components/MissingPersonReport';
+import PoliceDashboard from './components/PoliceDashboard';
+import PoliceRegistration from './components/PoliceRegistration';
+import UserLogin from './components/UserLogin';
+import UserRegistration from './components/UserRegistration';
 import { 
   Eye, 
   Smartphone, 
@@ -70,14 +74,60 @@ function AnimatedCounter({ end, duration = 2000, suffix = '' }: { end: number; d
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = React.useState<'home' | 'police-login' | 'missing-report'>('home');
+  const [currentPage, setCurrentPage] = React.useState<'home' | 'police-login' | 'police-register' | 'missing-report' | 'dashboard'| 'user-login' | 'user-register'>('home');
 
   if (currentPage === 'police-login') {
-    return <PoliceLogin onBack={() => setCurrentPage('home')} />;
+    return (
+      // <PoliceLogin 
+      //   onBack={() => setCurrentPage('home')} 
+      //   onLoginSuccess={() => setCurrentPage('dashboard')}
+      // />
+      <PoliceLogin 
+        onBack={() => setCurrentPage('home')} 
+        onLoginSuccess={() => setCurrentPage('dashboard')}
+        onSwitchToRegister={() => setCurrentPage('police-register')} // 🔹 add this
+      />
+
+    );
   }
+
+  if (currentPage === 'police-register') {
+  return (
+    <PoliceRegistration 
+      onBack={() => setCurrentPage('home')}
+      onRegistrationSuccess={() => setCurrentPage('police-login')}
+      onSwitchToLogin={() => setCurrentPage('police-login')}
+    />
+  );
+}
+
+if (currentPage === 'user-login') {
+  return (
+    <UserLogin
+      onBack={() => setCurrentPage('home')}
+      onLoginSuccess={() => setCurrentPage('missing-report')}
+      onSwitchToRegister={() => setCurrentPage('user-register')}
+    />
+  );
+}
+
+if (currentPage === 'user-register') {
+  return (
+    <UserRegistration
+      onBack={() => setCurrentPage('home')}
+      onRegistrationSuccess={() => setCurrentPage('user-login')}
+      onSwitchToLogin={() => setCurrentPage('user-login')}
+    />
+  );
+}
+
 
   if (currentPage === 'missing-report') {
     return <MissingPersonReport onBack={() => setCurrentPage('home')} />;
+  }
+
+  if (currentPage === 'dashboard') {
+    return <PoliceDashboard onLogout={() => setCurrentPage('home')} />;
   }
 
   const fadeInUp = {
@@ -172,16 +222,27 @@ function App() {
                 </motion.button>
                 
                 <motion.button
-                  onClick={() => setCurrentPage('missing-report')}
+                  onClick={() => setCurrentPage('user-login')}
                   className="group px-8 py-4 bg-red-500/20 backdrop-blur-lg border border-red-400/30 rounded-2xl text-white font-semibold text-lg hover:bg-red-500/30 transition-all duration-300 flex items-center justify-center gap-3"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <UserCheck className="w-6 h-6" />
-                  Report Missing Person / Item
+                  User Login / Register
                 </motion.button>
               </motion.div>
             </motion.div>
+
+            {/* <motion.button
+              onClick={() => setCurrentPage('user-login')}
+              className="group px-8 py-4 bg-blue-500/20 backdrop-blur-lg border border-blue-400/30 rounded-2xl text-white font-semibold text-lg hover:bg-blue-500/30 transition-all duration-300 flex items-center justify-center gap-3"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <UserCheck className="w-6 h-6" />
+              User Login / Register
+            </motion.button> */}
+
 
             {/* Right Content - 3D Model */}
             <motion.div 
