@@ -22,29 +22,56 @@ import {
 } from 'lucide-react';
 
 // 3D Scanning Globe Component
+// function ScanningGlobe() {
+//   return (
+//     <mesh>
+//       <Sphere args={[1, 32, 32]}>
+//         <meshStandardMaterial
+//           color="#0A3D62"
+//           transparent
+//           opacity={0.3}
+//           wireframe
+//         />
+//       </Sphere>
+//       <mesh>
+//         <sphereGeometry args={[1.05, 16, 16]} />
+//         <meshBasicMaterial
+//           color="#60A5FA"
+//           transparent
+//           opacity={0.1}
+//           wireframe
+//         />
+//       </mesh>
+//     </mesh>
+//   );
+// }
+
+// 3D Scanning Globe Component (Bigger Version)
 function ScanningGlobe() {
   return (
-    <mesh>
+    <mesh scale={3.3}>   {/* ⬅️ Increased globe size */}
       <Sphere args={[1, 32, 32]}>
         <meshStandardMaterial
-          color="#0A3D62"
+          color="#00D9FF"
           transparent
-          opacity={0.3}
+          opacity={0.7}
           wireframe
         />
       </Sphere>
-      <mesh>
-        <sphereGeometry args={[1.05, 16, 16]} />
+
+      <mesh scale={1.1}>  {/* Outer glow slightly bigger */}
+        <sphereGeometry args={[1, 16, 16]} />
         <meshBasicMaterial
-          color="#60A5FA"
+          color="#06B6D4"
           transparent
-          opacity={0.1}
+          opacity={0.5}
           wireframe
         />
       </mesh>
     </mesh>
   );
 }
+
 
 // Counter Component with Animation
 function AnimatedCounter({ end, duration = 2000, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
@@ -245,7 +272,7 @@ if (currentPage === 'user-register') {
 
 
             {/* Right Content - 3D Model */}
-            <motion.div 
+            {/* <motion.div 
               className="h-96 lg:h-[500px]"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -257,7 +284,38 @@ if (currentPage === 'user-register') {
                 <ScanningGlobe />
                 <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1} />
               </Canvas>
-            </motion.div>
+            </motion.div> */}
+
+            {/* Right Content - 3D Model */}
+<motion.div 
+  className="
+    absolute 
+    top-0
+    right-0
+    bottom-0
+    w-1/2
+    h-full
+    z-[-1] 
+    pointer-events-none
+    overflow-hidden
+  "
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.8, delay: 0.3 }}
+  style={{ willChange: 'auto' }}
+>
+  <Canvas 
+    camera={{ position: [3, 0, 5] }}
+    style={{ width: '100%', height: '100%' }}
+    gl={{ preserveDrawingBuffer: true }}
+  >
+    <ambientLight intensity={0.5} />
+    <pointLight position={[10, 10, 10]} />
+    <ScanningGlobe />
+    <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1} />
+  </Canvas>
+</motion.div>
+
           </div>
         </div>
       </section>
