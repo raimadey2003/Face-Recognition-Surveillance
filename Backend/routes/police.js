@@ -30,26 +30,39 @@ router.post('/login', async (req, res) => {
   try {
     const { badgeNumber, station, password } = req.body;
 
+    // Validate required fields
+    if (!badgeNumber || !station || !password) {
+      return res.status(400).json({ 
+        message: 'Missing required fields. Please provide badge number, station, and password.' 
+      });
+    }
+
+    // Find police officer by badgeNumber and station
     const police = await Police.findOne({ badgeNumber, station });
     if (!police) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ 
+        message: 'Invalid credentials. Badge number or station not found.' 
+      });
     }
 
     // Compare password using model method
     const isMatch = await police.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ 
+        message: 'Invalid credentials. Incorrect password.' 
+      });
     }
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: police._id, badgeNumber: police.badgeNumber, station: police.station },
+      { id: police._id.toString(), badgeNumber: police.badgeNumber, station: police.station },
       process.env.JWT_SECRET || 'secretkey',
       { expiresIn: '1d' }
     );
 
     res.json({ token, message: 'Login successful' });
   } catch (err) {
+    console.error('Police login error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });

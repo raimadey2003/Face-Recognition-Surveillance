@@ -1,5 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -58,11 +59,26 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // You can generate a JWT here if needed, for now just sending success
-    res.json({ message: 'Login successful', userId: user._id });
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id.toString(), email: user.email },
+      process.env.JWT_SECRET || 'secretkey',
+      { expiresIn: '1d' }
+    );
+
+    res.json({ 
+      message: 'Login successful', 
+      token,
+      user: {
+        id: user._id.toString(),
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone
+      }
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
@@ -11,7 +11,6 @@ import {
   MapPin, 
   Phone, 
   Camera, 
-  Filter, 
   Download, 
   Bell, 
   Settings, 
@@ -25,7 +24,10 @@ import {
   Zap,
   Target,
   Radio,
-  Monitor
+  Monitor,
+  X,
+  Image as ImageIcon,
+  UserCheck
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -42,7 +44,25 @@ interface MissingCase {
   status: 'active' | 'found' | 'investigating';
   priority: 'high' | 'medium' | 'low';
   description: string;
-  photo?: string;
+  photos?: string[];
+  // Full report data from backend
+  fullData?: {
+    _id: string;
+    reporterName: string;
+    reporterPhone: string;
+    reporterRelation?: string;
+    personName: string;
+    personAge: number;
+    personGender: string;
+    personHeight?: string;
+    personClothing?: string;
+    description?: string;
+    lastSeenLocation: string;
+    lastSeenTime: string;
+    photos: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 interface Alert {
@@ -58,7 +78,7 @@ export default function PoliceDashboard({ onLogout }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'cases' | 'surveillance' | 'alerts'>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'found' | 'investigating'>('all');
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alerts] = useState<Alert[]>([]);
   const [cases, setCases] = useState<MissingCase[]>([]);
   const [selectedCase, setSelectedCase] = useState<MissingCase | null>(null);
 
@@ -136,16 +156,17 @@ export default function PoliceDashboard({ onLogout }: DashboardProps) {
     const data = await res.json();
     const formattedCases = data.map((r: any) => ({
       id: r._id,
-      type: 'person',
+      type: 'person' as const,
       name: r.personName,
-      reportedBy: `${r.reporterName} (${r.reporterRelation})`,
+      reportedBy: `${r.reporterName}${r.reporterRelation ? ` (${r.reporterRelation})` : ''}`,
       location: r.lastSeenLocation,
       time: new Date(r.lastSeenTime).toLocaleString(),
-      status: r.status,
-      priority: 'high',
-      description: r.description,
-      // photo: r.photos?.[0] || ''
-      photo: r.photos?.[0] ? `http://localhost:5050/uploads/${r.photos[0]}` : undefined
+      status: (r.status || 'active') as 'active' | 'found' | 'investigating',
+      priority: 'high' as const,
+      description: r.description || '',
+      photos: r.photos?.map((p: string) => `http://localhost:5050/uploads/${p}`) || [],
+      // Store full report data for detail view
+      fullData: r
     }));
     setCases(formattedCases);
   };
@@ -611,41 +632,233 @@ export default function PoliceDashboard({ onLogout }: DashboardProps) {
         </div>
       </div>
       {/* Case Details Modal */}
-            {/* Case Details Modal */}
-{selectedCase && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 relative">
-      <button
-        onClick={() => setSelectedCase(null)}
-        className="absolute top-4 right-4 text-gray-600 hover:text-black"
-      >
-        ✖
-      </button>
+      <AnimatePresence>
+        {selectedCase && selectedCase.fullData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedCase(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gray-900 border border-white/20 rounded-3xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Case Details</h2>
+                    <p className="text-sm text-gray-400">Missing Person Report</p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={() => setSelectedCase(null)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <X className="w-6 h-6 text-gray-400" />
+                </motion.button>
+              </div>
 
-      <h2 className="text-2xl font-bold mb-4">Case Details: {selectedCase.name}</h2>
+              <div className="space-y-6">
+                {/* Missing Person Information */}
+                <div className="bg-white/5 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-400" />
+                    Missing Person Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Full Name</p>
+                      <p className="text-white font-semibold">{selectedCase.fullData.personName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Age</p>
+                      <p className="text-white font-semibold">{selectedCase.fullData.personAge} years</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Gender</p>
+                      <p className="text-white font-semibold capitalize">{selectedCase.fullData.personGender}</p>
+                    </div>
+                    {selectedCase.fullData.personHeight && (
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">Height</p>
+                        <p className="text-white font-semibold">{selectedCase.fullData.personHeight}</p>
+                      </div>
+                    )}
+                    {selectedCase.fullData.personClothing && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-gray-400 mb-1">Clothing Description</p>
+                        <p className="text-white">{selectedCase.fullData.personClothing}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-      <div className="space-y-2 text-gray-700">
-        <p><strong>ID:</strong> {selectedCase.id}</p>
-        <p><strong>Reported By:</strong> {selectedCase.reportedBy}</p>
-        <p><strong>Location:</strong> {selectedCase.location}</p>
-        <p><strong>Time:</strong> {selectedCase.time}</p>
-        <p><strong>Status:</strong> {selectedCase.status}</p>
-        <p><strong>Priority:</strong> {selectedCase.priority}</p>
-        <p><strong>Description:</strong> {selectedCase.description}</p>
-      </div>
+                {/* Last Seen Information */}
+                <div className="bg-white/5 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-yellow-400" />
+                    Last Seen Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Location</p>
+                      <p className="text-white font-semibold">{selectedCase.fullData.lastSeenLocation}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Date & Time</p>
+                      <p className="text-white font-semibold">
+                        {new Date(selectedCase.fullData.lastSeenTime).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-      {selectedCase.photo ? (
-        <div className="mt-4">
-          <img
-            src={selectedCase.photo}
-            alt={selectedCase.name || 'Missing Person'}
-            className="rounded-lg max-h-64 object-cover"
-          />
-        </div>
-      ) : null}
-    </div>
-  </div>
-)}
+                {/* Reporter Information */}
+                <div className="bg-white/5 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-purple-400" />
+                    Reporter Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Reporter Name</p>
+                      <p className="text-white font-semibold">{selectedCase.fullData.reporterName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1 flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        Phone Number
+                      </p>
+                      <p className="text-white font-semibold">{selectedCase.fullData.reporterPhone}</p>
+                    </div>
+                    {selectedCase.fullData.reporterRelation && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm text-gray-400 mb-1">Relationship</p>
+                        <p className="text-white">{selectedCase.fullData.reporterRelation}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Additional Description */}
+                {selectedCase.fullData.description && (
+                  <div className="bg-white/5 rounded-2xl p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">Additional Description</h3>
+                    <p className="text-gray-300 leading-relaxed">{selectedCase.fullData.description}</p>
+                  </div>
+                )}
+
+                {/* Photos */}
+                {selectedCase.fullData.photos && selectedCase.fullData.photos.length > 0 && (
+                  <div className="bg-white/5 rounded-2xl p-6">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-green-400" />
+                      Photos ({selectedCase.fullData.photos.length})
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {selectedCase.fullData.photos.map((photo, idx) => (
+                        <motion.div
+                          key={idx}
+                          className="relative aspect-square rounded-xl overflow-hidden border border-white/20"
+                          whileHover={{ scale: 1.05 }}
+                        >
+                          <img
+                            src={`http://localhost:5050/uploads/${photo}`}
+                            alt={`Photo ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage not found%3C/text%3E%3C/svg%3E';
+                            }}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Case Status & Priority */}
+                <div className="bg-white/5 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-orange-400" />
+                    Case Status
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Status</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedCase.status)}`}>
+                        {selectedCase.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 mb-1">Priority</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium text-white ${selectedCase.priority === 'high' ? 'bg-red-500/20' : selectedCase.priority === 'medium' ? 'bg-yellow-500/20' : 'bg-green-500/20'}`}>
+                        {selectedCase.priority.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Report Metadata */}
+                <div className="bg-white/5 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-purple-400" />
+                    Report Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-400 mb-1">Case ID</p>
+                      <p className="text-white font-mono">{selectedCase.fullData._id}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 mb-1">Reported On</p>
+                      <p className="text-white">
+                        {new Date(selectedCase.fullData.createdAt).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                    {selectedCase.fullData.updatedAt && (
+                      <div>
+                        <p className="text-gray-400 mb-1">Last Updated</p>
+                        <p className="text-white">
+                          {new Date(selectedCase.fullData.updatedAt).toLocaleString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
     </div>

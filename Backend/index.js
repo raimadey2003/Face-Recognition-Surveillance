@@ -31,7 +31,10 @@ const __dirname = path.dirname(__filename);
 
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
+  credentials: true
+}));
 app.use(express.json());
 // app.use('/uploads', express.static('uploads')); // for uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

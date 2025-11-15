@@ -103,4 +103,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get reports for a specific user (protected route)
+router.get('/my-reports', authMiddleware, async (req, res) => {
+  try {
+    const reports = await MissingReport.find({ user: req.user.id })
+      .sort({ createdAt: -1 }); // Most recent first
+    res.json(reports);
+  } catch (err) {
+    console.error("Error fetching user reports:", err);
+    res.status(500).json({ error: "Failed to fetch reports" });
+  }
+});
+
 export default router;

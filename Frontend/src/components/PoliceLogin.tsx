@@ -33,20 +33,49 @@ export default function PoliceLogin({ onBack, onLoginSuccess, onSwitchToRegister
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5050/api/police/login', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiUrl}/api/police/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          badgeNumber: formData.badgeNumber,
+          station: formData.station,
+          password: formData.password
+        })
       });
 
-      const data = await res.json();
+      // Get response text first to handle both JSON and non-JSON responses
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+        console.log('Police login response:', data); // Debug log
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError, 'Response text:', responseText);
+        setError('Server returned invalid response. Please check if backend is running.');
+        setIsLoading(false);
+        return;
+      }
 
-      if (!res.ok) throw new Error(data.message || 'Login failed');
+      if (!response.ok) {
+        setError(data.message || data.error || 'Login failed. Please check your credentials.');
+        setIsLoading(false);
+        return;
+      }
 
-      localStorage.setItem('token', data.token);
-      onLoginSuccess();
+      // Store token
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('Police login successful, token stored'); // Debug log
+        onLoginSuccess();
+      } else {
+        console.error('Missing token in response:', data);
+        setError('Server response missing token. Please try again.');
+      }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Police login error:', err);
+      setError(err.message || 'Unable to connect to server. Please check if backend is running.');
     } finally {
       setIsLoading(false);
     }

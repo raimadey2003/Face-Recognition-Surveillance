@@ -8,6 +8,7 @@ import PoliceDashboard from './components/PoliceDashboard';
 import PoliceRegistration from './components/PoliceRegistration';
 import UserLogin from './components/UserLogin';
 import UserRegistration from './components/UserRegistration';
+import UserDashboard from './components/UserDashboard';
 import { 
   Eye, 
   Smartphone, 
@@ -101,7 +102,7 @@ function AnimatedCounter({ end, duration = 2000, suffix = '' }: { end: number; d
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = React.useState<'home' | 'police-login' | 'police-register' | 'missing-report' | 'dashboard'| 'user-login' | 'user-register'>('home');
+  const [currentPage, setCurrentPage] = React.useState<'home' | 'police-login' | 'police-register' | 'missing-report' | 'dashboard'| 'user-login' | 'user-register'| 'user-dashboard'>('home');
 
   if (currentPage === 'police-login') {
     return (
@@ -132,7 +133,7 @@ if (currentPage === 'user-login') {
   return (
     <UserLogin
       onBack={() => setCurrentPage('home')}
-      onLoginSuccess={() => setCurrentPage('missing-report')}
+      onLoginSuccess={() => setCurrentPage('user-dashboard')}
       onSwitchToRegister={() => setCurrentPage('user-register')}
     />
   );
@@ -147,10 +148,19 @@ if (currentPage === 'user-register') {
     />
   );
 }
+  if (currentPage === 'user-dashboard') {
+  return (
+    <UserDashboard
+      onBack={() => setCurrentPage('home')}
+      onCreateReport={() => setCurrentPage('missing-report')}
+      onLogout={() => setCurrentPage('home')}
+    />
+  );
+}
 
 
   if (currentPage === 'missing-report') {
-    return <MissingPersonReport onBack={() => setCurrentPage('home')} />;
+    return <MissingPersonReport onBack={() => setCurrentPage('user-dashboard')} />;
   }
 
   if (currentPage === 'dashboard') {

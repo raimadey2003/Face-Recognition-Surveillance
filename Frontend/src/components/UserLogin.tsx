@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  User, 
   Eye, 
   EyeOff, 
   Lock, 
@@ -9,7 +8,6 @@ import {
   AlertCircle,
   CheckCircle,
   Mail,
-  Phone,
   UserCheck
 } from 'lucide-react';
 
@@ -28,63 +26,61 @@ export default function UserLogin({ onBack, onLoginSuccess, onSwitchToRegister }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     setIsLoading(true);
-//     setError('');
-
-//     try {
-//       // Simulate API call
-//       setTimeout(() => {
-//         if (formData.email && formData.password) {
-//           localStorage.setItem('userToken', 'user-authenticated');
-//           onLoginSuccess();
-//         } else {
-//           setError('Please fill in all required fields');
-//         }
-//         setIsLoading(false);
-//       }, 1000);
-//     } catch (err: any) {
-//       setError(err.message);
-//       setIsLoading(false);
-//     }
-//   };
-
-
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5050';
-    const response = await fetch(`${apiUrl}/api/users/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      })
-    });
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5050';
+      const response = await fetch(`${apiUrl}/api/users/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
 
-    const data = await response.json();
+      // Get response text first to handle both JSON and non-JSON responses
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+        console.log('Login response:', data); // Debug log
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError, 'Response text:', responseText);
+        setError('Server returned invalid response. Please check if backend is running.');
+        setIsLoading(false);
+        return;
+      }
 
-    if (!response.ok) {
-      setError(data.message || 'Login failed');
-    } else {
-      // You can store JWT or simple token
-      localStorage.setItem('userToken', data.userId); // or data.token if you implement JWT
-      onLoginSuccess();
+      if (!response.ok) {
+        setError(data.message || data.error || 'Login failed');
+        setIsLoading(false);
+        return;
+      }
+
+      // Store token and user info
+      if (data.token && data.user) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('Login successful, token stored'); // Debug log
+        onLoginSuccess();
+      } else {
+        console.error('Missing token or user in response:', data);
+        setError(`Server response missing required data. Received: ${JSON.stringify(data)}`);
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Unable to connect to server. Please check if backend is running.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err: any) {
-    setError(err.message || 'Server error');
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
