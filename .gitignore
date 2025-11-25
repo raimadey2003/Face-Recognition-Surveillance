@@ -14,6 +14,8 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
+.save/*
+deepface/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -23,3 +25,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.pt
+
+
