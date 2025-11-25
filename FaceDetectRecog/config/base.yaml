@@ -1,0 +1,24 @@
+# config/base.yaml
+paths:
+  raw_videos: "../data/raw"
+  processed_frames: "../data/processed"
+  annotations: "../data/annotations"
+
+models:
+  face_detector: "retinaface"
+  object_detector: "yolov8"
+  crowd_model: "stanet"
+
+thresholds:
+  face_confidence: 0.3
+  object_confidence: 0.5
+  crowd_density_warn: 0.7
+
+storage:
+  ipfs_address: "/dns/localhost/tcp/5001/http"
+  blockchain_rpc: "https://rinkeby.infura.io/v3/<YOUR_KEY>"
+
+encryption:
+  aes_key_path: "../keys/aes.key"
+  iframe_cipher: "AES"
+  pframe_cipher: "ChaCha20"
